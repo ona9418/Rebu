@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
-import { Stack } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Stack } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTrading } from '../../context/TradingContext';
 
 // --- DATA: CURRICULUM ---
 const MODULES = [
@@ -44,6 +45,7 @@ export default function LearnScreen() {
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<any>(null); // For Modal
   const [modalVisible, setModalVisible] = useState(false);
+  const { rewardUser } = useTrading(); // Use the hook
 
   // Load Progress
   useEffect(() => {
@@ -62,7 +64,9 @@ export default function LearnScreen() {
       const newProgress = [...completedLessons, lessonId];
       setCompletedLessons(newProgress);
       await AsyncStorage.setItem('@rebu_learn_progress', JSON.stringify(newProgress));
-      Alert.alert("Lesson Complete!", "Great job keeping up your streak.");
+      rewardUser(100); // Give $100 for learning
+      Alert.alert("Lesson Complete!", "You earned $100 for your trading account!");
+
     }
     setModalVisible(false);
   };

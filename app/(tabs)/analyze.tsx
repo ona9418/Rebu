@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-// 1. Get Key from Environment Variables
+// Ensure your .env has EXPO_PUBLIC_GEMINI_KEY
 const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GEMINI_KEY; 
 
 export default function AnalyzeScreen() {
@@ -24,7 +24,7 @@ export default function AnalyzeScreen() {
       mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.5,
-      base64: true,
+      base64: true, // Required for API
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -45,15 +45,15 @@ export default function AnalyzeScreen() {
     setAnalysis('');
 
     try {
-      console.log("🚀 Sending request to Gemini...");
+      console.log("🚀 Sending request to Gemini 2.5...");
       
-      // ⚠️ FIXED: Removed "-latest" from the URL
+      // UPDATED: Using 'gemini-2.5-flash' which is the current stable model
       const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent?key=${GOOGLE_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
         {
           contents: [{
             parts: [
-              { text: "You are a technical analyst. Analyze this chart image. Identify the trend, key support/resistance levels, and suggest a trade setup (Entry, Stop Loss, Take Profit)." },
+              { text: "You are a professional technical analyst. Analyze this financial chart. Identify the trend, key support/resistance levels, and suggest a potential trade setup (Entry, Stop Loss, Take Profit)." },
               {
                 inline_data: {
                   mime_type: "image/jpeg",
@@ -66,17 +66,24 @@ export default function AnalyzeScreen() {
       );
 
       console.log("✅ Gemini Success!");
-      // Gemini response structure
       if (response.data.candidates && response.data.candidates.length > 0) {
         const resultText = response.data.candidates[0].content.parts[0].text;
         setAnalysis(resultText);
       } else {
-        setAnalysis("No analysis returned. The image might be unclear.");
+        setAnalysis("The AI could not interpret this image. Please try a clearer chart.");
       }
 
     } catch (error: any) {
       console.error("❌ Gemini API Error:", error.response ? error.response.data : error.message);
-      Alert.alert("Analysis Failed", "Could not analyze chart. Check console for details.");
+      
+      // Specific error handling for common issues
+      if (error.response && error.response.status === 404) {
+        Alert.alert("Model Error", "The AI model is currently unavailable. Please check for updates.");
+      } else if (error.response && error.response.status === 400) {
+        Alert.alert("Image Error", "The image format was not rejected by the AI.");
+      } else {
+        Alert.alert("Analysis Failed", "Could not analyze chart. Check your internet connection.");
+      }
     } finally {
       setLoading(false);
     }
@@ -86,7 +93,7 @@ export default function AnalyzeScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.header}>Chart Analyzer</Text>
-        <Text style={styles.subHeader}>Powered by Gemini 1.5 Flash</Text>
+        <Text style={styles.subHeader}>Powered by Gemini 2.5 Flash</Text>
 
         <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
           {image ? (
@@ -102,7 +109,7 @@ export default function AnalyzeScreen() {
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Gemini is analyzing patterns...</Text>
+            <Text style={styles.loadingText}>Analyzing market structure...</Text>
           </View>
         )}
 

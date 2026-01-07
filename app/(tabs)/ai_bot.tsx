@@ -1,15 +1,19 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
-import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
+import { Stack } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const API_KEY = process.env.EXPO_PUBLIC_API_KEY;interface Message {
+// Move Interface ABOVE the constant to prevent parsing errors
+interface Message {
   id: string;
   text: string;
   sender: 'user' | 'bot';
 }
+
+// Get API Key
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY;
 
 export default function AIBotScreen() {
   const [message, setMessage] = useState('');
@@ -20,7 +24,6 @@ export default function AIBotScreen() {
   
   const flatListRef = useRef<FlatList>(null);
 
-  // 1. Fetch Live Data
   const fetchMarketData = async () => {
     try {
       const response = await axios.get(
@@ -43,7 +46,6 @@ export default function AIBotScreen() {
     }
     if (message.trim().length === 0) return;
 
-    // 2. Add User Message
     const userMsg: Message = { id: Date.now().toString(), text: message, sender: 'user' };
     const newHistory = [...chatHistory, userMsg];
     setChatHistory(newHistory);
@@ -51,10 +53,10 @@ export default function AIBotScreen() {
     setIsTyping(true);
 
     try {
-      // 3. Get Context
       const liveMarketContext = await fetchMarketData();
 
-      // 4. Send to GROQ (or OpenAI)
+      // Using Llama-3 via Groq as configured in your original file
+      // If you want to use Gemini here too, change the URL/Model
       const response = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
         {
@@ -136,7 +138,6 @@ export default function AIBotScreen() {
                 onChangeText={setMessage}
                 onSubmitEditing={sendMessage}
             />
-            {/* The Send Button uses TouchableOpacity here: */}
             <TouchableOpacity 
                 onPress={sendMessage} 
                 style={[styles.sendButton, { backgroundColor: message ? '#007AFF' : '#E0E0E0' }]} 

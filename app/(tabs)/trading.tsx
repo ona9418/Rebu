@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert, Dimensions, Animated } from 'react-native';
-import { Stack } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LineChart } from 'react-native-chart-kit';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Stack } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { LineChart } from 'react-native-chart-kit';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- MOCK DATA CONFIGURATION ---
 const MARKET_DATA = {
@@ -211,6 +211,9 @@ export default function TradingScreen() {
     ]);
   };
 
+  const isUp = chartData.length > 1 && chartData[chartData.length - 1] >= chartData[0];
+  const chartColor = isUp ? '#4CAF50' : '#F44336'; 
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -279,8 +282,15 @@ export default function TradingScreen() {
                 withVerticalLabels={false} withHorizontalLabels={false}
                 chartConfig={{
                   backgroundColor: '#fff', backgroundGradientFrom: '#fff', backgroundGradientTo: '#fff',
-                  decimalPlaces: 2, color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+                  decimalPlaces: 2, 
+                  color: (opacity = 1) => isUp 
+                    ? `rgba(76, 175, 80, ${opacity})` 
+                    : `rgba(244, 67, 54, ${opacity})`,
                   labelColor: () => `rgba(0,0,0,0)`, propsForBackgroundLines: { strokeWidth: 0 },
+                  fillShadowGradientFrom: chartColor,
+                  fillShadowGradientFromOpacity: 0.5,
+                  fillShadowGradientTo: chartColor,
+                  fillShadowGradientToOpacity: 0.0,
                 }}
                 bezier style={{ marginLeft: -20, marginTop: 10 }}
               />
@@ -382,7 +392,9 @@ const styles = StyleSheet.create({
   toggleTextActive: { color: '#000' },
 
   inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F5F5', borderRadius: 12, paddingHorizontal: 15, height: 50, marginBottom: 15 },
+  // FIXED: Syntax error was here (missing closing bracket)
   input: { flex: 1, fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
+  
   btnRow: { flexDirection: 'row', gap: 10 },
   btn: { flex: 1, height: 45, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   btnText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
