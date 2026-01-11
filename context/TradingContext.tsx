@@ -1,35 +1,57 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Define the shape of your data
+// 1. Define the shape of a Holding/Position
+export interface AssetHolding {
+  symbol: string;
+  category: 'crypto' | 'forex' | 'commodities';
+  amount: number;
+  avgPrice: number;
+}
+
+// 2. Define the Context Type
 interface TradingContextType {
   balance: number;
   setBalance: (val: number) => void;
-  holdings: any[];
-  setHoldings: (val: any[]) => void;
-  // Add other shared state here (market data, etc.)
+  holdings: AssetHolding[]; // Use specific type instead of any[]
+  setHoldings: React.Dispatch<React.SetStateAction<AssetHolding[]>>; // Correct setter type
 }
 
 const TradingContext = createContext<TradingContextType | undefined>(undefined);
 
 export function TradingProvider({ children }: { children: React.ReactNode }) {
   const [balance, setBalance] = useState(10000);
-  const [holdings, setHoldings] = useState([]);
+  
+  // FIX: Explicitly type the empty array
+  const [holdings, setHoldings] = useState<AssetHolding[]>([]); 
 
   // Load data on mount
   useEffect(() => {
-    AsyncStorage.getItem('@rebu_paper_sim').then((json) => {
-      if (json) {
-        const data = JSON.parse(json);
-        setBalance(data.balance);
-        setHoldings(data.holdings || []);
+    const loadData = async () => {
+      try {
+        const json = await AsyncStorage.getItem('@rebu_paper_sim');
+        if (json) {
+          const data = JSON.parse(json);
+          setBalance(data.balance ?? 10000);
+          setHoldings(data.holdings || []);
+        }
+      } catch (e) {
+        console.error("Failed to load trading data", e);
       }
-    });
+    };
+    loadData();
   }, []);
 
   // Save data on change
   useEffect(() => {
-    AsyncStorage.setItem('@rebu_paper_sim', JSON.stringify({ balance, holdings }));
+    const saveData = async () => {
+      try {
+        await AsyncStorage.setItem('@rebu_paper_sim', JSON.stringify({ balance, holdings }));
+      } catch (e) {
+        console.error("Failed to save trading data", e);
+      }
+    };
+    saveData();
   }, [balance, holdings]);
 
   return (
