@@ -1,10 +1,12 @@
-import { View, Text } from 'react-native';
+import { Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'; // Import this
+
 
 export default function ForexScreen() {
   return (
-    <View style={{ flex: 1, padding: 20 }}>
+    <SafeAreaView style={{ flex: 1, padding: 20 }}>
       <Text>Forex Markets</Text>
       {/* Forex UI */}
-    </View>
+    </SafeAreaView>
   );
 }

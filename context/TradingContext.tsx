@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 1. Define the shape of a Holding/Position
 export interface AssetHolding {
   symbol: string;
   category: 'crypto' | 'forex' | 'commodities';
@@ -9,21 +8,22 @@ export interface AssetHolding {
   avgPrice: number;
 }
 
-// 2. Define the Context Type
 interface TradingContextType {
   balance: number;
   setBalance: (val: number) => void;
-  holdings: AssetHolding[]; // Use specific type instead of any[]
-  setHoldings: React.Dispatch<React.SetStateAction<AssetHolding[]>>; // Correct setter type
+  holdings: AssetHolding[];
+  setHoldings: React.Dispatch<React.SetStateAction<AssetHolding[]>>;
+  rewardUser: (amount: number) => void; // Added this
+  completedLessons: string[]; // Added this
+  markLessonComplete: (lessonId: string) => void; // Added this
 }
 
 const TradingContext = createContext<TradingContextType | undefined>(undefined);
 
 export function TradingProvider({ children }: { children: React.ReactNode }) {
   const [balance, setBalance] = useState(10000);
-  
-  // FIX: Explicitly type the empty array
-  const [holdings, setHoldings] = useState<AssetHolding[]>([]); 
+  const [holdings, setHoldings] = useState<AssetHolding[]>([]);
+  const [completedLessons, setCompletedLessons] = useState<string[]>([]); // New State
 
   // Load data on mount
   useEffect(() => {
@@ -35,27 +35,45 @@ export function TradingProvider({ children }: { children: React.ReactNode }) {
           setBalance(data.balance ?? 10000);
           setHoldings(data.holdings || []);
         }
+        // Load Lesson Progress
+        const progressJson = await AsyncStorage.getItem('@rebu_learn_progress');
+        if (progressJson) setCompletedLessons(JSON.parse(progressJson));
       } catch (e) {
-        console.error("Failed to load trading data", e);
+        console.error("Failed to load data", e);
       }
     };
     loadData();
   }, []);
 
-  // Save data on change
+  // Save trading data on change
   useEffect(() => {
     const saveData = async () => {
       try {
         await AsyncStorage.setItem('@rebu_paper_sim', JSON.stringify({ balance, holdings }));
-      } catch (e) {
-        console.error("Failed to save trading data", e);
-      }
+      } catch (e) { console.error("Failed to save trading data", e); }
     };
     saveData();
   }, [balance, holdings]);
 
+  // Helper to give money
+  const rewardUser = (amount: number) => {
+    setBalance(prev => prev + amount);
+  };
+
+  // Helper to mark lesson complete
+  const markLessonComplete = async (lessonId: string) => {
+    if (!completedLessons.includes(lessonId)) {
+      const newProgress = [...completedLessons, lessonId];
+      setCompletedLessons(newProgress);
+      await AsyncStorage.setItem('@rebu_learn_progress', JSON.stringify(newProgress));
+      
+      rewardUser(100); // Reward $100
+      alert("Lesson Complete! You earned $100.");
+    }
+  };
+
   return (
-    <TradingContext.Provider value={{ balance, setBalance, holdings, setHoldings }}>
+    <TradingContext.Provider value={{ balance, setBalance, holdings, setHoldings, rewardUser, completedLessons, markLessonComplete }}>
       {children}
     </TradingContext.Provider>
   );

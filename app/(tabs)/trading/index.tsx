@@ -1,18 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useTrading } from '../../../context/TradingContext';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context'; // Import this
 
 export default function CryptoScreen() {
-  // Now we actually use 'holdings' to filter for crypto
   const { balance, holdings } = useTrading();
-
-  // Filter only Crypto assets
   const cryptoHoldings = holdings.filter(h => h.category === 'crypto');
 
   return (
-    <View style={styles.container}>
-      {/* Balance Header */}
+    // Replaced View with SafeAreaView and set edges to bottom only
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
         <Text style={styles.label}>Available Cash</Text>
         <Text style={styles.balance}>${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
@@ -43,12 +41,12 @@ export default function CryptoScreen() {
           )}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F4F6F8', padding: 20 },
+  container: { flex: 1, backgroundColor: '#F4F6F8', paddingHorizontal: 20, paddingTop: 20 },
   header: { marginBottom: 20, padding: 20, backgroundColor: '#FFF', borderRadius: 16, alignItems: 'center' },
   label: { color: '#666', fontSize: 12, textTransform: 'uppercase' },
   balance: { fontSize: 32, fontWeight: '800', color: '#1A1A1A', marginTop: 5 },
